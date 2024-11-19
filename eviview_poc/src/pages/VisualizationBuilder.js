@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
     Container,
     Typography,
@@ -7,124 +7,226 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    TextField,
     Paper,
     Box,
-} from '@mui/material';
-import { Line, Bar, Pie } from 'react-chartjs-2';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+    Grid,
+} from "@mui/material";
+import { Line, Bar, Pie } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    PointElement,
+    LineElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend,
+} from "chart.js";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// Register ChartJS components
+ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    PointElement,
+    LineElement,
+    ArcElement,
+    Title,
+    Tooltip,
+    Legend
+);
 
 const VisualizationBuilder = () => {
-    const [dataTables] = useState([
-        { id: 1, title: 'Sales Data' },
-        { id: 2, title: 'Inventory Data' },
-    ]);
-    const [selectedTable, setSelectedTable] = useState('');
-    const [visualizationType, setVisualizationType] = useState('');
-    const [xAxis, setXAxis] = useState('');
-    const [yAxis, setYAxis] = useState('');
+    const dataTables = [
+        {
+            id: 1,
+            title: "Sales Data",
+            columns: ["Month", "Revenue", "Profit"],
+            rows: [
+                { Month: "January", Revenue: 10000, Profit: 4000 },
+                { Month: "February", Revenue: 15000, Profit: 7000 },
+                { Month: "March", Revenue: 20000, Profit: 9000 },
+                { Month: "April", Revenue: 25000, Profit: 12000 },
+                { Month: "May", Revenue: 30000, Profit: 15000 },
+            ],
+        },
+        {
+            id: 2,
+            title: "Inventory Data",
+            columns: ["Category", "Stock", "Sales"],
+            rows: [
+                { Category: "Electronics", Stock: 500, Sales: 200 },
+                { Category: "Clothing", Stock: 1000, Sales: 500 },
+                { Category: "Groceries", Stock: 2000, Sales: 800 },
+                { Category: "Books", Stock: 300, Sales: 150 },
+                { Category: "Toys", Stock: 400, Sales: 200 },
+            ],
+        },
+    ];
+
+    const [selectedTableId, setSelectedTableId] = useState("");
+    const [visualizationType, setVisualizationType] = useState("");
+    const [xAxis, setXAxis] = useState("");
+    const [yAxis, setYAxis] = useState("");
     const [chartData, setChartData] = useState(null);
 
-    // Example data for preview (would be dynamic based on the selected data table)
-    const exampleData = {
-        labels: ['January', 'February', 'March', 'April', 'May'],
-        datasets: [
-            {
-                label: 'Dataset 1',
-                data: [10, 20, 30, 40, 50],
-                backgroundColor: 'rgba(75,192,192,0.4)',
-                borderColor: 'rgba(75,192,192,1)',
-                borderWidth: 1,
-            },
-        ],
-    };
-
-    // Handle Generate Chart
     const handleGenerateChart = () => {
-        if (!selectedTable || !visualizationType || !xAxis || !yAxis) {
-            alert('Please complete all fields to generate the chart.');
+        if (!selectedTableId || !visualizationType || !xAxis || !yAxis) {
+            alert("Please complete all fields to generate the chart.");
             return;
         }
-        // Generate chart data dynamically based on the selected table and columns
-        setChartData(exampleData);
+
+        const selectedTable = dataTables.find((table) => table.id === selectedTableId);
+        const labels = selectedTable.rows.map((row) => row[xAxis]);
+        const values = selectedTable.rows.map((row) => row[yAxis]);
+
+        setChartData({
+            labels,
+            datasets: [
+                {
+                    label: `${yAxis} by ${xAxis}`,
+                    data: values,
+                    backgroundColor: visualizationType === "Pie"
+                        ? ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]
+                        : "rgba(75,192,192,0.4)",
+                    borderColor: "rgba(75,192,192,1)",
+                    borderWidth: 1,
+                },
+            ],
+        });
     };
 
     return (
-        <Container>
-            <br></br>
+        <Container
+            maxWidth={false}
+            sx={{
+                padding: 2,
+                margin: 0,
+                width: "100%",
+                minHeight: "100vh",
+                backgroundColor: "#f5f5f5",
+            }}
+        >
+            <br />
             <Typography variant="h4" gutterBottom>
                 Visualization Builder
             </Typography>
 
-            <Paper elevation={10} style={{ padding: '20px', marginBottom: '20px' }}>
-                <FormControl fullWidth margin="normal">
-                    <InputLabel>Select Data Table</InputLabel>
-                    <Select
-                        value={selectedTable}
-                        onChange={(e) => setSelectedTable(e.target.value)}
-                    >
-                        {dataTables.map((table) => (
-                            <MenuItem key={table.id} value={table.title}>
-                                {table.title}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+            <Grid container spacing={4}>
+                {/* Input Section */}
+                <Grid item xs={12} md={6}>
+                    <Paper elevation={10} style={{ padding: "20px" }}>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="table-label">Select Data Table</InputLabel>
+                            <Select
+                                labelId="table-label"
+                                value={selectedTableId}
+                                onChange={(e) => {
+                                    setSelectedTableId(e.target.value);
+                                    setXAxis("");
+                                    setYAxis("");
+                                    setChartData(null);
+                                }}
+                                label="Select Data Table"
+                            >
+                                {dataTables.map((table) => (
+                                    <MenuItem key={table.id} value={table.id}>
+                                        {table.title}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
 
-                <FormControl fullWidth margin="normal">
-                    <InputLabel>Select Visualization Type</InputLabel>
-                    <Select
-                        value={visualizationType}
-                        onChange={(e) => setVisualizationType(e.target.value)}
-                    >
-                        <MenuItem value="Bar">Bar Chart</MenuItem>
-                        <MenuItem value="Line">Line Chart</MenuItem>
-                        <MenuItem value="Pie">Pie Chart</MenuItem>
-                    </Select>
-                </FormControl>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="visualization-type-label">Select Visualization Type</InputLabel>
+                            <Select
+                                labelId="visualization-type-label"
+                                value={visualizationType}
+                                onChange={(e) => setVisualizationType(e.target.value)}
+                                label="Select Visualization Type"
+                            >
+                                <MenuItem value="Bar">Bar Chart</MenuItem>
+                                <MenuItem value="Line">Line Chart</MenuItem>
+                                <MenuItem value="Pie">Pie Chart</MenuItem>
+                            </Select>
+                        </FormControl>
 
-                <TextField
-                    fullWidth
-                    label="X-Axis"
-                    margin="normal"
-                    placeholder="Enter column name for X-Axis"
-                    value={xAxis}
-                    onChange={(e) => setXAxis(e.target.value)}
-                />
-                <TextField
-                    fullWidth
-                    label="Y-Axis"
-                    margin="normal"
-                    placeholder="Enter column name for Y-Axis"
-                    value={yAxis}
-                    onChange={(e) => setYAxis(e.target.value)}
-                />
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="x-axis-label">Select X-Axis</InputLabel>
+                            <Select
+                                labelId="x-axis-label"
+                                value={xAxis}
+                                onChange={(e) => setXAxis(e.target.value)}
+                                disabled={!selectedTableId}
+                                label="Select X-Axis"
+                            >
+                                {selectedTableId &&
+                                    dataTables
+                                        .find((table) => table.id === selectedTableId)
+                                        .columns.map((column) => (
+                                            <MenuItem key={column} value={column}>
+                                                {column}
+                                            </MenuItem>
+                                        ))}
+                            </Select>
+                        </FormControl>
 
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={handleGenerateChart}
-                    style={{ marginTop: '20px' }}
-                >
-                    Generate Chart
-                </Button>
-            </Paper>
+                        <FormControl fullWidth margin="normal">
+                            <InputLabel id="y-axis-label">Select Y-Axis</InputLabel>
+                            <Select
+                                labelId="y-axis-label"
+                                value={yAxis}
+                                onChange={(e) => setYAxis(e.target.value)}
+                                disabled={!selectedTableId}
+                                label="Select Y-Axis"
+                            >
+                                {selectedTableId &&
+                                    dataTables
+                                        .find((table) => table.id === selectedTableId)
+                                        .columns.map((column) => (
+                                            <MenuItem key={column} value={column}>
+                                                {column}
+                                            </MenuItem>
+                                        ))}
+                            </Select>
+                        </FormControl>
 
-            {/* Chart Preview */}
-            {chartData && (
-                <Box>
-                    <Typography variant="h6" gutterBottom>
-                        Chart Preview
-                    </Typography>
-                    <Paper elevation={10} style={{ padding: '20px' }}>
-                        {visualizationType === 'Bar' && <Bar data={chartData} />}
-                        {visualizationType === 'Line' && <Line data={chartData} />}
-                        {visualizationType === 'Pie' && <Pie data={chartData} />}
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={handleGenerateChart}
+                            style={{ marginTop: "20px" }}
+                        >
+                            Generate Chart
+                        </Button>
                     </Paper>
-                </Box>
-            )}
+                </Grid>
+
+                {/* Chart Preview Section */}
+                <Grid item xs={12} md={6}>
+                    {chartData && (
+                        <Box>
+                            <Typography variant="h6" gutterBottom>
+                                Chart Preview
+                            </Typography>
+                            <Paper
+                                elevation={10}
+                                style={{
+                                    padding: "20px",
+                                    maxWidth: "100%",
+                                    height: "350px",
+                                }}
+                            >
+                                {visualizationType === "Bar" && <Bar data={chartData} />}
+                                {visualizationType === "Line" && <Line data={chartData} />}
+                                {visualizationType === "Pie" && <Pie data={chartData} />}
+                            </Paper>
+                        </Box>
+                    )}
+                </Grid>
+            </Grid>
         </Container>
     );
 };

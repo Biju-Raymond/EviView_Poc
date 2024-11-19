@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -27,7 +26,6 @@ import {
 } from '@mui/material';
 
 const DataTableBuilder = () => {
-  const navigate = useNavigate();
 
   const [dataTables, setDataTables] = useState([
     {
@@ -123,17 +121,18 @@ const DataTableBuilder = () => {
   };
 
   return (
-    <Container>
-      <Button
-        variant="outlined"
-        color="primary"
-        onClick={() => navigate('/visualization-builder')}
-        style={{ marginTop: '20px' }}
-      >
-        Visualization Builder
-      </Button>
+    <Container
+      maxWidth={false}
+      sx={{
+        padding: 0,
+        margin: 0,
+        width: "100%", // Full width
+        minHeight: "100vh", // Full height
+        backgroundColor: "#f5f5f5", // Background for distinction
+      }}
+    >
 
-      <br></br>
+
       <br></br>
 
       <Typography variant="h4" gutterBottom>
@@ -200,11 +199,13 @@ const DataTableBuilder = () => {
           </FormControl>
           {formData.dataType === 'Automated' && (
             <FormControl fullWidth margin="dense">
-              <InputLabel>Dataset</InputLabel>
+              <InputLabel id="dataset-label">Dataset</InputLabel>
               <Select
                 name="dataset"
                 value={formData.dataset}
                 onChange={handleChange}
+                labelId="dataset-label"
+                label="Dataset"
               >
                 {datasets.map((dataset, idx) => (
                   <MenuItem key={idx} value={dataset}>

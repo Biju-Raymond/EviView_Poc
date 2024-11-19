@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
     Container,
     Typography,
@@ -24,7 +23,6 @@ import {
 } from '@mui/material';
 
 const DataConnections = () => {
-    const navigate = useNavigate();
     const [data, setData] = useState([
         { id: 1, title: 'API Connection', type: 'API', status: 'Connected', refreshRate: '00:15:00' },
         { id: 2, title: 'SQL Connection', type: 'SQL', status: 'Not Connected', refreshRate: '00:30:00' },
@@ -89,17 +87,16 @@ const DataConnections = () => {
     };
 
     return (
-        <Container>
-            <br></br>
-            {/* Add navigation button */}
-            <Button
-                variant="outlined"
-                color="secondary"
-                onClick={() => navigate('/data-table-builder')}
-                style={{ marginBottom: '20px' }}
-            >
-                Data Table Builder
-            </Button>
+        <Container
+            maxWidth={false}
+            sx={{
+                padding: 0,
+                margin: 0,
+                width: "100%", // Full width
+                minHeight: "100vh", // Full height
+                backgroundColor: "#f5f5f5", // Background for distinction
+            }}
+        >
             <br></br>
             <Typography variant="h4" gutterBottom>
                 Data Connections
