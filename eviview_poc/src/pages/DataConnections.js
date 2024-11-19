@@ -41,7 +41,7 @@ const DataConnections = () => {
     const handleDeleteDialogClose = () => {
         setDeleteDialog({ open: false, id: null });
     };
-    // Computed filtered data
+
     const filteredData = useMemo(() => {
         return data.filter((row) => {
             return (
@@ -51,19 +51,16 @@ const DataConnections = () => {
         });
     }, [data, searchQuery, filterType]);
 
-    // Open the dialog
     const handleOpen = () => setOpen(true);
     const handleClose = () => {
         setOpen(false);
         setFormData({ title: '', type: '', refreshRate: '' });
     };
 
-    // Handle form input
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    // Handle form submission
     const handleSubmit = () => {
         if (!formData.title || !formData.type || !formData.refreshRate) {
             setSnackbar({ open: true, message: 'All fields are required!', severity: 'error' });
@@ -78,11 +75,20 @@ const DataConnections = () => {
     const handleDeleteConfirm = () => {
         setData(data.filter((row) => row.id !== deleteDialog.id));
         setDeleteDialog({ open: false, id: null });
-        setSnackbar({ open: true, message: 'Connection deleted!', severity: 'info' });
+        setSnackbar({ open: true, message: 'Connection Deleted!', severity: 'info' });
+    };
+
+    const handleTestConnection = (id) => {
+        const connection = data.find((row) => row.id === id);
+        if (connection) {
+            // Simulate a successful connection test
+            setSnackbar({ open: true, message: `${connection.title} tested successfully!`, severity: 'success' });
+        }
     };
 
     return (
         <Container>
+            <br></br>
             <Typography variant="h4" gutterBottom>
                 Data Connections
             </Typography>
@@ -113,20 +119,31 @@ const DataConnections = () => {
             </Button>
 
             {/* Connections Table */}
-            <Paper elevation={3}>
-                <Table>
-                    <TableHead>
+            <Paper elevation={10}>
+                <Table sx={{ border: '1px solid #ddd', borderRadius: '8px' }}>
+
+                    <TableHead sx={{ backgroundColor: '#f0f0f0' }}>
+
                         <TableRow>
-                            <TableCell>Title</TableCell>
-                            <TableCell>Type</TableCell>
-                            <TableCell>Refresh Rate</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell>Actions</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Title</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Refresh Rate</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                            <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
+
                     <TableBody>
                         {filteredData.map((row) => (
-                            <TableRow key={row.id}>
+                            <TableRow
+                                key={row.id}
+                                sx={{
+                                    '&:hover': {
+                                        backgroundColor: '#f5f5f5',
+                                    },
+                                }}
+                            >
+
                                 <TableCell>{row.title}</TableCell>
                                 <TableCell>{row.type}</TableCell>
                                 <TableCell>{row.refreshRate}</TableCell>
@@ -134,6 +151,13 @@ const DataConnections = () => {
                                 <TableCell>
                                     <Button color="secondary" onClick={() => handleDeleteClick(row.id)}>
                                         Delete
+                                    </Button>
+                                    <Button
+                                        color="primary"
+                                        onClick={() => handleTestConnection(row.id)}
+                                        style={{ marginLeft: '10px' }}
+                                    >
+                                        Test Connection
                                     </Button>
                                 </TableCell>
                             </TableRow>
