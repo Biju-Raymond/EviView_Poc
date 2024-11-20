@@ -19,41 +19,28 @@ import {
     TableCell,
     TableBody,
 } from '@mui/material';
-import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    BarElement,
-    ArcElement,
-    Title,
-    Tooltip,
-    Legend,
-} from 'chart.js';
-import { Line, Bar, Pie } from 'react-chartjs-2';
-
-// Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
+import ChartWrapper from '../components/common/ChartWrapper';
 
 const WidgetBuilder = () => {
     const [formData, setFormData] = useState({
         title: '',
         widgetType: 'Graph',
-        graphType: 'Multiple Line Chart',
+        graphType: 'SingleLineChart', // Default graph type
         xAxisData: '',
         yAxisData: '',
+        yAxes: [''], // For Multiple Line Chart, initialize with one Y-axis
     });
     const [columns, setColumns] = useState([]);
     const [rows, setRows] = useState([]);
-    const [chartData, setChartData] = useState({
-        labels: [],
-        datasets: [],
-    });
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     // Fetch API Data
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
+            setError(null);
+
             try {
                 const response = await fetch('http://192.168.2.9:3000/salaries', {
                     headers: { Accept: 'application/json' },
@@ -64,41 +51,17 @@ const WidgetBuilder = () => {
                     setColumns(data.columns);
                     setRows(data.data);
                 } else {
-                    console.error('Invalid API response format.');
+                    throw new Error('Invalid API response format.');
                 }
-            } catch (error) {
-                console.error('Error fetching data:', error);
+            } catch (err) {
+                setError(err.message);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchData();
     }, []);
-
-    // Update chart data dynamically
-    useEffect(() => {
-        const { xAxisData, yAxisData, widgetType } = formData;
-
-        if (widgetType === 'Graph' && xAxisData && yAxisData && rows.length > 0) {
-            const labels = rows.map((row) => row[xAxisData] || 'N/A'); // Handle missing data safely
-            const values = rows.map((row) => parseFloat(row[yAxisData]) || 0); // Parse numerical values safely
-
-            setChartData({
-                labels,
-                datasets: [
-                    {
-                        label: `${yAxisData} by ${xAxisData}`,
-                        data: values,
-                        backgroundColor:
-                            formData.graphType === 'Pie Chart'
-                                ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
-                                : 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 2,
-                    },
-                ],
-            });
-        }
-    }, [formData, rows]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -168,9 +131,10 @@ const WidgetBuilder = () => {
                                         onChange={handleInputChange}
                                         label="Graph Type"
                                     >
-                                        <MenuItem value="Multiple Line Chart">Multiple Line Chart</MenuItem>
-                                        <MenuItem value="Bar Chart">Bar Chart</MenuItem>
-                                        <MenuItem value="Pie Chart">Pie Chart</MenuItem>
+                                        <MenuItem value="SingleLineChart">Single Line Chart</MenuItem>
+                                        <MenuItem value="MultipleLineChart">Multiple Line Chart</MenuItem>
+                                        <MenuItem value="BarChart">Bar Chart</MenuItem>
+                                        <MenuItem value="PieChart">Pie Chart</MenuItem>
                                     </Select>
                                 </FormControl>
 
@@ -191,22 +155,92 @@ const WidgetBuilder = () => {
                                     </Select>
                                 </FormControl>
 
-                                <FormControl fullWidth margin="normal">
-                                    <InputLabel id="y-axis-data-label">Y-Axis Data</InputLabel>
-                                    <Select
-                                        labelId="y-axis-data-label"
-                                        name="yAxisData"
-                                        value={formData.yAxisData}
-                                        onChange={handleInputChange}
-                                        label="Y-Axis Data"
-                                    >
-                                        {columns.map((col) => (
-                                            <MenuItem key={col} value={col}>
-                                                {col}
-                                            </MenuItem>
+                                {/* Y-Axis Selection Logic */}
+                                {formData.graphType === 'SingleLineChart' ? (
+                                    <FormControl fullWidth margin="normal">
+                                        <InputLabel id="y-axis-data-label">Y-Axis Data</InputLabel>
+                                        <Select
+                                            labelId="y-axis-data-label"
+                                            name="yAxisData"
+                                            value={formData.yAxisData}
+                                            onChange={handleInputChange}
+                                            label="Y-Axis Data"
+                                        >
+                                            {columns.map((col) => (
+                                                <MenuItem key={col} value={col}>
+                                                    {col}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
+                                ) : (
+                                    <Box>
+                                        {formData.yAxes.map((yAxis, index) => (
+                                            <Box
+                                                key={index}
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 1,
+                                                    marginBottom: 2,
+                                                }}
+                                            >
+                                                <FormControl fullWidth>
+                                                    <InputLabel id={`y-axis-data-label-${index}`}>
+                                                        Y-Axis Data {index + 1}
+                                                    </InputLabel>
+                                                    <Select
+                                                        labelId={`y-axis-data-label-${index}`}
+                                                        value={yAxis}
+                                                        onChange={(e) => {
+                                                            const newYAxes = [...formData.yAxes];
+                                                            newYAxes[index] = e.target.value;
+                                                            setFormData({ ...formData, yAxes: newYAxes });
+                                                        }}
+                                                        label={`Y-Axis Data ${index + 1}`}
+                                                    >
+                                                        {columns.map((col) => (
+                                                            <MenuItem key={col} value={col}>
+                                                                {col}
+                                                            </MenuItem>
+                                                        ))}
+                                                    </Select>
+                                                </FormControl>
+                                                <Typography
+                                                    sx={{
+                                                        cursor: 'pointer',
+                                                        color: 'red',
+                                                        fontWeight: 'bold',
+                                                    }}
+                                                    onClick={() => {
+                                                        const newYAxes = formData.yAxes.filter(
+                                                            (_, i) => i !== index
+                                                        );
+                                                        setFormData({ ...formData, yAxes: newYAxes });
+                                                    }}
+                                                >
+                                                    X
+                                                </Typography>
+                                            </Box>
                                         ))}
-                                    </Select>
-                                </FormControl>
+                                        <Typography
+                                            sx={{
+                                                cursor: 'pointer',
+                                                color: 'blue',
+                                                fontWeight: 'bold',
+                                                marginTop: 1,
+                                            }}
+                                            onClick={() =>
+                                                setFormData({
+                                                    ...formData,
+                                                    yAxes: [...formData.yAxes, ''],
+                                                })
+                                            }
+                                        >
+                                            + Add Y-Axis
+                                        </Typography>
+                                    </Box>
+                                )}
                             </>
                         )}
                     </Paper>
@@ -219,18 +253,32 @@ const WidgetBuilder = () => {
                             Widget Preview
                         </Typography>
 
-                        {formData.widgetType === 'Graph' ? (
+                        {loading ? (
+                            <Box>Loading...</Box>
+                        ) : error ? (
+                            <Box>Error: {error}</Box>
+                        ) : formData.widgetType === 'Graph' ? (
                             <Box sx={{ height: '400px', position: 'relative' }}>
-                                {formData.graphType === 'Multiple Line Chart' && <Line data={chartData} />}
-                                {formData.graphType === 'Bar Chart' && <Bar data={chartData} />}
-                                {formData.graphType === 'Pie Chart' && <Pie data={chartData} />}
+                                <ChartWrapper
+                                    type={formData.graphType}
+                                    dataUrl="http://192.168.2.9:3000/salaries"
+                                    xKey={formData.xAxisData}
+                                    yKey={formData.yAxisData} // For Single Line Chart
+                                    yKeys={
+                                        formData.graphType === 'MultipleLineChart'
+                                            ? formData.yAxes
+                                            : undefined
+                                    } // For Multiple Line Chart
+                                />
                             </Box>
                         ) : (
                             <Table>
                                 <TableHead>
                                     <TableRow>
                                         {columns.map((col) => (
-                                            <TableCell key={col}>{col}</TableCell>
+                                            <TableCell key={col} sx={{ fontWeight: 'bold' }}>
+                                                {col}
+                                            </TableCell>
                                         ))}
                                     </TableRow>
                                 </TableHead>
@@ -259,7 +307,9 @@ const WidgetBuilder = () => {
                         <TableHead>
                             <TableRow>
                                 {columns.map((col) => (
-                                    <TableCell key={col}>{col}</TableCell>
+                                    <TableCell key={col} sx={{ fontWeight: 'bold' }}>
+                                        {col}
+                                    </TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
