@@ -155,25 +155,8 @@ const WidgetBuilder = () => {
                                     </Select>
                                 </FormControl>
 
-                                {/* Y-Axis Selection Logic */}
-                                {formData.graphType === 'SingleLineChart' ? (
-                                    <FormControl fullWidth margin="normal">
-                                        <InputLabel id="y-axis-data-label">Y-Axis Data</InputLabel>
-                                        <Select
-                                            labelId="y-axis-data-label"
-                                            name="yAxisData"
-                                            value={formData.yAxisData}
-                                            onChange={handleInputChange}
-                                            label="Y-Axis Data"
-                                        >
-                                            {columns.map((col) => (
-                                                <MenuItem key={col} value={col}>
-                                                    {col}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-                                ) : (
+                                {/* Dynamic Y-Axis Selection */}
+                                {formData.graphType === 'MultipleLineChart' ? (
                                     <Box>
                                         {formData.yAxes.map((yAxis, index) => (
                                             <Box
@@ -240,6 +223,23 @@ const WidgetBuilder = () => {
                                             + Add Y-Axis
                                         </Typography>
                                     </Box>
+                                ) : (
+                                    <FormControl fullWidth margin="normal">
+                                        <InputLabel id="y-axis-data-label">Y-Axis Data</InputLabel>
+                                        <Select
+                                            labelId="y-axis-data-label"
+                                            name="yAxisData"
+                                            value={formData.yAxisData}
+                                            onChange={handleInputChange}
+                                            label="Y-Axis Data"
+                                        >
+                                            {columns.map((col) => (
+                                                <MenuItem key={col} value={col}>
+                                                    {col}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 )}
                             </>
                         )}
@@ -264,11 +264,7 @@ const WidgetBuilder = () => {
                                     dataUrl="http://192.168.2.9:3000/salaries"
                                     xKey={formData.xAxisData}
                                     yKey={formData.yAxisData} // For Single Line Chart
-                                    yKeys={
-                                        formData.graphType === 'MultipleLineChart'
-                                            ? formData.yAxes
-                                            : undefined
-                                    } // For Multiple Line Chart
+                                    yKeys={formData.graphType === 'MultipleLineChart' ? formData.yAxes : undefined}
                                 />
                             </Box>
                         ) : (
