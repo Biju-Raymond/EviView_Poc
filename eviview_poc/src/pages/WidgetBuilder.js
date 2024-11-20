@@ -36,102 +36,74 @@ import { Line, Bar, Pie } from 'react-chartjs-2';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Title, Tooltip, Legend);
 
-// Dummy data for different data tables
-const dataTables = {
-    salesData: {
-        columns: ['Month', 'Revenue', 'Profit'],
-        rows: [
-            { Month: 'Jan', Revenue: 10000, Profit: 4000 },
-            { Month: 'Feb', Revenue: 15000, Profit: 7000 },
-            { Month: 'Mar', Revenue: 20000, Profit: 9000 },
-            { Month: 'Apr', Revenue: 25000, Profit: 12000 },
-            { Month: 'May', Revenue: 30000, Profit: 15000 },
-            { Month: 'Jun', Revenue: 35000, Profit: 17000 },
-            { Month: 'Jul', Revenue: 40000, Profit: 20000 },
-            { Month: 'Aug', Revenue: 45000, Profit: 22000 },
-            { Month: 'Sep', Revenue: 50000, Profit: 25000 },
-            { Month: 'Oct', Revenue: 55000, Profit: 28000 },
-            { Month: 'Nov', Revenue: 60000, Profit: 30000 },
-            { Month: 'Dec', Revenue: 65000, Profit: 32000 },
-        ],
-    },
-    employeeData: {
-        columns: ['Department', 'Employees', 'Satisfaction Score'],
-        rows: [
-            { Department: 'HR', Employees: 50, 'Satisfaction Score': 80 },
-            { Department: 'IT', Employees: 200, 'Satisfaction Score': 75 },
-            { Department: 'Sales', Employees: 100, 'Satisfaction Score': 85 },
-            { Department: 'Marketing', Employees: 70, 'Satisfaction Score': 90 },
-            { Department: 'Operations', Employees: 150, 'Satisfaction Score': 88 },
-            { Department: 'Finance', Employees: 80, 'Satisfaction Score': 92 },
-            { Department: 'Support', Employees: 60, 'Satisfaction Score': 77 },
-            { Department: 'Logistics', Employees: 40, 'Satisfaction Score': 80 },
-        ],
-    },
-};
-
-// Initial dummy chart data
-const initialChartData = {
-    labels: [],
-    datasets: [],
-};
-
 const WidgetBuilder = () => {
     const [formData, setFormData] = useState({
         title: '',
         widgetType: 'Graph',
-        dataTable: '',
         graphType: 'Multiple Line Chart',
         xAxisData: '',
         yAxisData: '',
     });
-    const [chartData, setChartData] = useState(initialChartData);
-    const [tableData, setTableData] = useState({ columns: [], rows: [] });
+    const [columns, setColumns] = useState([]);
+    const [rows, setRows] = useState([]);
+    const [chartData, setChartData] = useState({
+        labels: [],
+        datasets: [],
+    });
 
-    // Updates form state when user changes input
+    // Fetch API Data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await fetch('http://192.168.2.9:3000/salaries', {
+                    headers: { Accept: 'application/json' },
+                });
+                const data = await response.json();
+
+                if (data && Array.isArray(data.columns) && Array.isArray(data.data)) {
+                    setColumns(data.columns);
+                    setRows(data.data);
+                } else {
+                    console.error('Invalid API response format.');
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    // Update chart data dynamically
+    useEffect(() => {
+        const { xAxisData, yAxisData, widgetType } = formData;
+
+        if (widgetType === 'Graph' && xAxisData && yAxisData && rows.length > 0) {
+            const labels = rows.map((row) => row[xAxisData] || 'N/A'); // Handle missing data safely
+            const values = rows.map((row) => parseFloat(row[yAxisData]) || 0); // Parse numerical values safely
+
+            setChartData({
+                labels,
+                datasets: [
+                    {
+                        label: `${yAxisData} by ${xAxisData}`,
+                        data: values,
+                        backgroundColor:
+                            formData.graphType === 'Pie Chart'
+                                ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0']
+                                : 'rgba(75, 192, 192, 0.2)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 2,
+                    },
+                ],
+            });
+        }
+    }, [formData, rows]);
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
-
-    // Dynamically updates chart data or table data based on user selections
-    useEffect(() => {
-        const { dataTable, xAxisData, yAxisData, widgetType } = formData;
-
-        // Handle table preview
-        if (dataTable) {
-            const selectedTable = dataTables[dataTable];
-            if (selectedTable) {
-                setTableData(selectedTable);
-            }
-        }
-
-        // Handle chart preview
-        if (widgetType === 'Graph' && dataTable && xAxisData && yAxisData) {
-            const selectedTable = dataTables[dataTable];
-            if (selectedTable) {
-                const labels = selectedTable.rows.map((row) => row[xAxisData]);
-                const values = selectedTable.rows.map((row) => row[yAxisData]);
-
-                // Update chart data dynamically based on selected graph type
-                const newChartData = {
-                    labels,
-                    datasets: [
-                        {
-                            label: `${yAxisData} by ${xAxisData}`,
-                            data: values,
-                            backgroundColor:
-                                formData.graphType === 'Pie Chart' ? ['#FF6384', '#36A2EB', '#FFCE56'] : 'rgba(75, 192, 192, 0.2)',
-                            borderColor: 'rgba(75, 192, 192, 1)',
-                            borderWidth: 2,
-                        },
-                    ],
-                };
-
-                setChartData(newChartData);
-            }
-        }
-    }, [formData]);
 
     return (
         <Container
@@ -184,21 +156,6 @@ const WidgetBuilder = () => {
                             </RadioGroup>
                         </FormControl>
 
-                        {/* Data Table */}
-                        <FormControl fullWidth margin="normal">
-                            <InputLabel id="data-table-label">Select Data Table</InputLabel>
-                            <Select
-                                labelId="data-table-label"
-                                name="dataTable"
-                                value={formData.dataTable}
-                                onChange={handleInputChange}
-                                label="Select Data Table"
-                            >
-                                <MenuItem value="salesData">Sales Data</MenuItem>
-                                <MenuItem value="employeeData">Employee Data</MenuItem>
-                            </Select>
-                        </FormControl>
-
                         {/* Graph Specific Inputs */}
                         {formData.widgetType === 'Graph' && (
                             <>
@@ -226,12 +183,11 @@ const WidgetBuilder = () => {
                                         onChange={handleInputChange}
                                         label="X-Axis Data"
                                     >
-                                        {formData.dataTable &&
-                                            dataTables[formData.dataTable].columns.map((col) => (
-                                                <MenuItem key={col} value={col}>
-                                                    {col}
-                                                </MenuItem>
-                                            ))}
+                                        {columns.map((col) => (
+                                            <MenuItem key={col} value={col}>
+                                                {col}
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
 
@@ -244,12 +200,11 @@ const WidgetBuilder = () => {
                                         onChange={handleInputChange}
                                         label="Y-Axis Data"
                                     >
-                                        {formData.dataTable &&
-                                            dataTables[formData.dataTable].columns.map((col) => (
-                                                <MenuItem key={col} value={col}>
-                                                    {col}
-                                                </MenuItem>
-                                            ))}
+                                        {columns.map((col) => (
+                                            <MenuItem key={col} value={col}>
+                                                {col}
+                                            </MenuItem>
+                                        ))}
                                     </Select>
                                 </FormControl>
                             </>
@@ -274,16 +229,16 @@ const WidgetBuilder = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        {tableData.columns.map((col) => (
+                                        {columns.map((col) => (
                                             <TableCell key={col}>{col}</TableCell>
                                         ))}
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {tableData.rows.map((row, idx) => (
+                                    {rows.map((row, idx) => (
                                         <TableRow key={idx}>
-                                            {tableData.columns.map((col) => (
-                                                <TableCell key={col}>{row[col]}</TableCell>
+                                            {columns.map((col) => (
+                                                <TableCell key={col}>{row[col] || 'N/A'}</TableCell>
                                             ))}
                                         </TableRow>
                                     ))}
@@ -303,16 +258,16 @@ const WidgetBuilder = () => {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                {tableData.columns.map((col) => (
+                                {columns.map((col) => (
                                     <TableCell key={col}>{col}</TableCell>
                                 ))}
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {tableData.rows.map((row, idx) => (
+                            {rows.map((row, idx) => (
                                 <TableRow key={idx}>
-                                    {tableData.columns.map((col) => (
-                                        <TableCell key={col}>{row[col]}</TableCell>
+                                    {columns.map((col) => (
+                                        <TableCell key={col}>{row[col] || 'N/A'}</TableCell>
                                     ))}
                                 </TableRow>
                             ))}

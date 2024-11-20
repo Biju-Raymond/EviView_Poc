@@ -13,6 +13,7 @@ import {
   Typography,
   CssBaseline,
   Divider,
+  SpeedDialIcon,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
@@ -36,7 +37,7 @@ export default function App() {
     { text: "Data Connections", icon: <HomeIcon />, path: "/" },
     { text: "Data Table Builder", icon: <StorageIcon />, path: "/data-table-builder" },
     { text: "Visualization Builder", icon: <BarChartIcon />, path: "/visualization-builder" },
-    { text: "Widget Builder", icon: <BarChartIcon />, path: "/widget-builder" },
+    { text: "Widget Builder", icon: <SpeedDialIcon />, path: "/widget-builder" },
   ];
 
   return (
