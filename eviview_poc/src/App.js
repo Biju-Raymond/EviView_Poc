@@ -21,7 +21,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import DataConnections from "./pages/DataConnections";
 import DataTableBuilder from "./pages/DataTableBuilder";
 import VisualizationBuilder from "./pages/VisualizationBuilder";
-import { color } from "chart.js/helpers";
+import WidgetBuilder from "./pages/WidgetBuilder";
 
 const drawerWidth = 240;
 
@@ -36,6 +36,7 @@ export default function App() {
     { text: "Data Connections", icon: <HomeIcon />, path: "/" },
     { text: "Data Table Builder", icon: <StorageIcon />, path: "/data-table-builder" },
     { text: "Visualization Builder", icon: <BarChartIcon />, path: "/visualization-builder" },
+    { text: "Widget Builder", icon: <BarChartIcon />, path: "/widget-builder" },
   ];
 
   return (
@@ -123,6 +124,7 @@ export default function App() {
             <Route path="/" element={<DataConnections />} />
             <Route path="/data-table-builder" element={<DataTableBuilder />} />
             <Route path="/visualization-builder" element={<VisualizationBuilder />} />
+            <Route path="/widget-builder" element={<WidgetBuilder />} />
           </Routes>
         </Box>
       </Box>

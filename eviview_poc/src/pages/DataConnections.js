@@ -92,8 +92,8 @@ const DataConnections = () => {
             sx={{
                 padding: 0,
                 margin: 0,
-                width: "100%", // Full width
-                minHeight: "100vh", // Full height
+                width: "100%",
+                minHeight: "100vh",
                 backgroundColor: "#f5f5f5", // Background for distinction
             }}
         >
